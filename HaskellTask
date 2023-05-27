@@ -1,0 +1,75 @@
+--                     C                            B
+--                     .___________________________.  
+--                    /\                        __/\
+--                   /  \                   ___/    \
+--                  /    \               __/         \
+--                 /      \           __/             \
+--                /        \       __/                 \
+--               /          \   __/                     \
+--              /___________ \_/_________________________\
+--	  AB + BC	      A                         AC + CB
+
+--Obszar A B C i AB+BC to zbiór punktow ktore mozna wyznaczyc przesuwajac punkt A o wektor = x*AB + y*BC, gdzie 0<=x,y<=1
+--analogicznie obszar A C B AC+CB tylko wektor=x*AC+y*CB
+--jezeli dla obu obszarow istnieje takie x y spelniajace te warunki, że da się uzyskać punkt(0,0), to znaczy ze punkt (0,0) jest wewnatrz ( bo jest w czesci wspolnej)
+
+--czyli rozwiazujemy uklad rownan dla w i z
+--{x(A) + x(AB) * w + x(BC) * z = 0
+--{y(A) + y(AB) * w + y(BC) * z = 0
+-- =>
+--{x(AB) * w + x(BC) * z = -x(A)
+--{y(AB) * w + y(BC) * z = -y(A)
+
+-- i sprawdzamy czy 0<=w,z<=1, jeśli tak, to punkt (0,0) jest wewnatrz trójkąta
+
+data Punkt = Wspolrzedne { --traktowane jest jako wektor takze
+  x::Float ,
+  y::Float
+} 
+
+type Wektor = Punkt
+
+test01 :: Float -> Bool -- czy x jest pomiedzy 0 a 1
+test01 x = (0 <= x && x <= 1)
+
+
+concat2TuplesIntoList :: (Float,Float) ->(Float,Float) ->[Float]
+concat2TuplesIntoList a b = [fst a, snd a, fst b ,snd b]
+    
+zwroc_wektor :: Punkt -> Punkt -> Wektor
+zwroc_wektor a b = Wspolrzedne (x(b) - x(a))  (y(b) - y(a))
+    
+policzWyznacznik :: Wektor -> Wektor -> Float
+-- | x(a) y(a) |
+-- | x(b) y(b) |
+policzWyznacznik a b = (x(a) * y(b)) - (y(a) * x(b)) 
+    
+rozwiazUkladRownan :: Punkt -> Punkt -> Punkt -> (Float, Float) --wynik ma byc para liczb, tu wyjatkowo zeby bylo rozroznienie ze to nie jest ani wektor ani punkt
+rozwiazUkladRownan wierzcholek wektor_u wektor_v = do
+    let wyznacznik_glowny = policzWyznacznik(wektor_u)(wektor_v)
+    let wyznacznik_x =policzWyznacznik(Wspolrzedne (x(wierzcholek) * (-1))  (x(wektor_v)))  (Wspolrzedne (y(wierzcholek) * (-1)) (y(wektor_v)) ) --rzutowanie na Punkt
+    let wyznacznik_y =policzWyznacznik(Wspolrzedne (x(wektor_u)) (x(wierzcholek) * (-1)))(Wspolrzedne (y(wektor_u)) (y(wierzcholek) * (-1)))
+    let x = wyznacznik_x / wyznacznik_glowny
+    let y = wyznacznik_y / wyznacznik_glowny
+    (x , y)
+    
+trojkatZawieraSrodek :: Punkt -> Punkt -> Punkt -> Bool
+trojkatZawieraSrodek a b c = do
+    let wektor_a_b = zwroc_wektor a b
+    let wektor_b_c = zwroc_wektor b c
+    let wektor_a_c = zwroc_wektor a c
+    let wektor_c_b = zwroc_wektor c b
+    let pierwszy_test = rozwiazUkladRownan(a) (wektor_a_b) (wektor_b_c)
+    let drugi_test = rozwiazUkladRownan(a) (wektor_a_c) (wektor_c_b)
+    let tab_wynikow = map test01( concat2TuplesIntoList  pierwszy_test drugi_test)
+    foldl (&&) True tab_wynikow
+
+main = do
+	let punkt1= Wspolrzedne (0) 0
+	let punkt2= Wspolrzedne (-100) (-99)
+	let punkt3= Wspolrzedne 100 100
+	print(trojkatZawieraSrodek(punkt1)(punkt2)(punkt3))
+	
+	
+	
+	
